@@ -65,6 +65,16 @@
 - 브레이크포인트: `768px` (태블릿), `1024px` (데스크톱)
 - Projects 카드: `grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))`
 
+### 레이아웃 선택 (Flex vs Grid)
+
+#### Flex를 사용한 네비게이션
+- `display: flex`로 로고·메뉴·액션 버튼을 수평으로 정렬
+- **이유**: 네비게이션은 **단일 행(1D 축)**에서 항목 간 공간을 균등하게 분배해야 하므로 Flexbox가 효율적
+
+#### Grid를 사용한 프로젝트 카드 레이아웃
+- `grid-template-columns: repeat(auto-fit, minmax(280px, 1fr))`로 반응형 그리드 구현
+- **이유**: 프로젝트 목록은 **행·열이 동시에 변하는 2D 레이아웃**이며, `auto-fit`과 `minmax`를 통해 뷰포트 너비에 따라 자동으로 열 수를 조정하므로 CSS Grid가 최적
+
 ---
 
 ## 상태 관리 흐름 (이벤트 → 상태 → 렌더링)
