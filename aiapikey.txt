@@ -1,0 +1,26 @@
+sk-cody-live-sXqitH7oDZREJDPnLHFCiamRIAYHF5VLGZZyT_S6Wd0
+
+1. claude 설치
+2. 설정 파일
+~/.claude/settings.json
+
+{
+  "env": {
+    "ANTHROPIC_BASE_URL": "https://copa.codyssey.kr",
+    "ANTHROPIC_API_KEY": "<virtual-key>",
+    "ANTHROPIC_MODEL": "claude-sonnet-4",
+    "ANTHROPIC_SMALL_FAST_MODEL": "claude-haiku-4"
+  }
+}
+
+3. claude 실행
+
+.claude/settings.json 설정
+Claude Code는 settings.json의 env 값을 읽습니다. macOS/Linux/WSL은 ~/.claude/settings.json, Windows는 %USERPROFILE%\.claude\settings.json 파일을 편집합니다.
+아래 JSON을 넣고 <virtual-key>를 발급받은 Anthropic 호환 API 키로 바꿉니다.
+ANTHROPIC_MODEL과 ANTHROPIC_SMALL_FAST_MODEL에는 위 모델 테이블의 모델 ID를 그대로 입력합니다.
+저장 후 새 터미널에서 claude를 실행하거나 claude --settings ~/.claude/settings.json으로 해당 설정을 지정합니다.
+
+curl -fsSL https://claude.ai/install.sh | bash
+
+https://velog.io/@shinheee121/Claude-CLI-%EC%84%A4%EC%B9%98-%EB%B0%8F-%EC%82%AC%EC%9A%A9%EB%B2%95-macOS-%EA%B8%B0%EC%A4%80
