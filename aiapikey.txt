@@ -25,3 +25,6 @@ npm install -g @anthropic-ai/claude-code
 which claude   # /opt/homebrew/bin/claude 와 같이 출력되면 성공
 
 https://velog.io/@shinheee121/Claude-CLI-%EC%84%A4%EC%B9%98-%EB%B0%8F-%EC%82%AC%EC%9A%A9%EB%B2%95-macOS-%EA%B8%B0%EC%A4%80
+
+4. 실행
+python3 -m http.server 8000
