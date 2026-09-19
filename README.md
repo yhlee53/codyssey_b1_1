@@ -114,6 +114,20 @@ cd b2-1
 # 4. VS Code Live Server로 실행 (또는 아무 정적 서버)
 ```
 
+## 보너스 과제 구현 내역
+
+- 프로젝트 필터링: 언어별 필터 버튼을 동적으로 생성하여 `array.filter()`로 프로젝트 목록을 필터링합니다.
+- 타이핑 효과: Hero 섹션에 `TYPING_WORDS` 배열을 사용한 타자기 효과를 구현했습니다. 설정은 `js/main.js`의 `CONFIG`에서 조정하세요.
+- 폼 실제 전송: EmailJS 연동을 지원합니다. EmailJS를 사용하려면 `js/main.js` 상단 `CONFIG`에 `EMAILJS_SERVICE_ID`, `EMAILJS_TEMPLATE_ID`, `EMAILJS_PUBLIC_KEY` 값을 입력하세요. 값이 비어 있으면 기존의 시뮬레이션 전송 동작이 유지됩니다.
+  - EmailJS 설정 예:
+    - `EMAILJS_SERVICE_ID`: service_xxx
+    - `EMAILJS_TEMPLATE_ID`: template_xxx
+    - `EMAILJS_PUBLIC_KEY`: user_xxx
+  - EmailJS 사용 시 `index.html`에 SDK가 이미 포함되어 있으며, 실제 전송 과정에서 `emailjs.send()`를 호출합니다.
+- 시스템 다크 모드 감지: `prefers-color-scheme` 미디어 쿼리로 초기 테마를 결정하고, 시스템 설정 변경을 실시간으로 감지하여 자동 적용합니다 (단, 사용자가 직접 토글하여 저장한 경우 로컬 설정 우선).
+
+원하시면 EmailJS에 필요한 키를 제가 설정 파일로 넣어드리거나, Formspree 적용으로 대체해 드리겠습니다.
+
 ## GitHub Pages 배포
 
 ```bash

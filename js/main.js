@@ -11,6 +11,10 @@ const CONFIG = Object.freeze({
   TYPING_SPEED:    150,   // ms: 타이핑 속도
   ERASING_SPEED:   75,    // ms: 지우기 속도
   PAUSE_TIME:      1800,  // ms: 단어 유지 시간
+  /* EmailJS 설정: 실제 전송을 사용하려면 EmailJS 계정에서 발급받은 값을 넣으세요. 빈 값이면 시뮬레이션 모드로 동작합니다. */
+  EMAILJS_SERVICE_ID:  '', // ex: 'service_xxx'
+  EMAILJS_TEMPLATE_ID: '', // ex: 'template_xxx'
+  EMAILJS_PUBLIC_KEY:   '', // ex: 'user_xxx' 또는 public key
 });
 
 /* ============================================================
@@ -564,23 +568,49 @@ const handleSubmit = async (e) => {
   el.submitBtn.disabled = true;
   el.submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>전송 중...</span>';
 
-  /* 실제 전송 시뮬레이션 (Formspree/EmailJS 연동 시 교체) */
-  await new Promise((resolve) => setTimeout(resolve, 1200));
+  /* 실제 전송: EmailJS 설정이 있다면 EmailJS로 전송, 없으면 시뮬레이션 모드 */
+  const useEmailJS = CONFIG.EMAILJS_SERVICE_ID && CONFIG.EMAILJS_TEMPLATE_ID && CONFIG.EMAILJS_PUBLIC_KEY;
 
-  state.form.isSubmitting = false;
-  state.form.isSubmitted  = true;
+  try {
+    if (useEmailJS && window.emailjs) {
+      // EmailJS 초기화 (public key)
+      emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
 
-  el.submitBtn.disabled = false;
-  el.submitBtn.innerHTML = '<i class="fas fa-paper-plane" aria-hidden="true"></i><span>메시지 보내기</span>';
+      const templateParams = {
+        from_name: state.form.name.value,
+        from_email: state.form.email.value,
+        message: state.form.message.value,
+      };
 
-  el.formSuccess.classList.remove('hidden');
-  el.contactForm.reset();
+      await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams);
 
-  /* 5초 후 성공 메시지 숨기기 */
-  setTimeout(() => {
-    el.formSuccess.classList.add('hidden');
-    resetForm();
-  }, 5000);
+    } else {
+      // 시뮬레이션(네트워크 지연 모사)
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+    }
+
+    state.form.isSubmitting = false;
+    state.form.isSubmitted  = true;
+
+    el.submitBtn.disabled = false;
+    el.submitBtn.innerHTML = '<i class="fas fa-paper-plane" aria-hidden="true"></i><span>메시지 보내기</span>';
+
+    el.formSuccess.classList.remove('hidden');
+    el.contactForm.reset();
+
+    /* 5초 후 성공 메시지 숨기기 */
+    setTimeout(() => {
+      el.formSuccess.classList.add('hidden');
+      resetForm();
+    }, 5000);
+
+  } catch (err) {
+    console.error('[Form] 전송 실패:', err);
+    state.form.isSubmitting = false;
+    el.submitBtn.disabled = false;
+    el.submitBtn.innerHTML = '<i class="fas fa-paper-plane" aria-hidden="true"></i><span>메시지 보내기</span>';
+    alert('메시지 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+  }
 };
 
 /* ============================================================
