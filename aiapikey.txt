@@ -28,3 +28,35 @@ https://velog.io/@shinheee121/Claude-CLI-%EC%84%A4%EC%B9%98-%EB%B0%8F-%EC%82%AC%
 
 4. 실행
 python3 -m http.server 8080
+
+
+Continue 2.0 Local Config 설정
+VS Code에서 Continue 2.0 확장을 설치하고 Continue 사이드바의 Agent 선택기에서 Local Config 톱니바퀴를 엽니다.
+Windows는 %USERPROFILE%\.continue\config.yaml, macOS/Linux는 ~/.continue/config.yaml을 편집합니다.
+아래 예시처럼 provider는 openai, apiBase는 https://copa.codyssey.kr/v1, apiKey는 발급받은 virtual key로 설정합니다.
+model에는 위 모델 테이블의 모델 ID를 그대로 입력합니다. models 아래 항목을 더 추가하면 여러 모델을 등록할 수 있습니다.
+
+name: Codyssey Public API
+version: 1.0.0
+schema: v1
+models:
+  - name: Codyssey GPT-5
+    provider: openai
+    model: gpt-5-mini
+    apiBase: https://copa.codyssey.kr/v1
+    apiKey: sk-cody-live-md4nTMJtIYLD2PbFeypNLglVGLEBcT_nKedzfGcUfsI
+    useResponsesApi: false
+    roles:
+      - chat
+      - edit
+      - apply
+    capabilities:
+      - tool_use
+    defaultCompletionOptions:
+      maxTokens: 4096
+
+context:
+  - provider: file
+  - provider: code
+  - provider: diff
+  - provider: terminal
