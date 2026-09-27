@@ -1,5 +1,12 @@
 /* ============================================================
    CONFIG  ← 여기서 본인 정보를 수정하세요
+   이 섹션은 포트폴리오 전반에 필요한 기본 설정값을 모아둔 곳입니다.
+   - GitHub 사용자 이름
+   - 프로젝트 수 제한
+   - 스크롤 기준값
+   - 타이핑 효과 속도
+   - EmailJS 메일 발송 설정
+   실제 이메일을 받으려면 TO_EMAIL, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, EMAILJS_PUBLIC_KEY 값을 맞춰야 합니다.
    ============================================================ */
 const CONFIG = Object.freeze({
   GITHUB_USERNAME:         'yhlee53', // GitHub 아이디
@@ -20,6 +27,9 @@ const CONFIG = Object.freeze({
 
 /* ============================================================
    STATE  — "이벤트 → 상태 변경 → 화면 업데이트" 흐름의 단일 진실 출처
+   이 객체는 페이지가 현재 어떤 상태인지 저장하는 중앙 저장소입니다.
+   예를 들어 테마, 메뉴 열림 여부, 스크롤 위치, 프로젝트 목록 상태, 폼 입력 상태 등을 모두 여기서 관리합니다.
+   이렇게 상태를 한 곳에서 관리하면 코드 흐름을 추적하기 쉽고, UI를 일관되게 업데이트할 수 있습니다.
    ============================================================ */
 const state = {
   /* 테마: 로컬스토리지 > 시스템 설정 > 기본값(light) 순으로 초기화 */
@@ -58,6 +68,9 @@ const state = {
 
 /* ============================================================
    DOM 참조 캐시 (querySelector는 한 번만 실행)
+   자주 사용하는 요소를 미리 변수로 저장해두면 DOM 탐색 비용을 줄이고,
+   이후 코드에서 반복적으로 요소를 찾지 않아도 되므로 성능이 좋아집니다.
+   이 객체는 헤더, 네비게이션, 프로젝트 영역, 폼, 스크롤 버튼 등을 담고 있습니다.
    ============================================================ */
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => ctx.querySelectorAll(sel);
@@ -103,6 +116,8 @@ const el = {
    이벤트: 클릭
    상태:   state.theme 변경
    렌더:   html[data-theme], 아이콘, localStorage
+   사용자가 다크/라이트 모드를 전환할 때 호출됩니다.
+   선택한 테마는 브라우저 저장소에 저장되어 다음 방문 시 유지됩니다.
    ============================================================ */
 const applyTheme = (theme) => {
   el.html.setAttribute('data-theme', theme);
@@ -120,6 +135,8 @@ const toggleTheme = () => {
    이벤트: 클릭, 링크 클릭, 외부 클릭
    상태:   state.menu.isOpen
    렌더:   nav__menu.open, hamburger.active, aria-expanded
+   모바일 환경에서 메뉴를 열고 닫는 로직입니다.
+   메뉴가 열려 있으면 햄버거 아이콘이 X 모양으로 바뀌고, 외부를 클릭하면 자동으로 닫힙니다.
    ============================================================ */
 const setMenuOpen = (isOpen) => {
   state.menu.isOpen = isOpen;
@@ -136,6 +153,7 @@ const toggleMenu = () => setMenuOpen(!state.menu.isOpen);
    이벤트: scroll
    상태:   state.scroll.isScrolled, state.scroll.showScrollTop
    렌더:   header.scrolled, scrollTop 버튼 가시성, nav active 링크
+   사용자가 페이지를 스크롤할 때 헤더 배경색, 상단 이동 버튼, 현재 활성 섹션을 업데이트합니다.
    ============================================================ */
 const updateScroll = () => {
   const y = window.scrollY;
@@ -176,7 +194,9 @@ const highlightActiveSection = () => {
 
 /* ============================================================
    4. 스크롤 애니메이션 (Intersection Observer)
-   임계값: CONFIG.INTERSECTION_THRESHOLD (0.2)
+   화면에 보이는 요소에 .visible 클래스를 추가해 서서히 나타나게 합니다.
+   fade-in 클래스가 붙은 요소는 페이지 진입 시 자연스럽게 보이도록 처리됩니다.
+   임계값: CONFIG.INTERSECTION_THRESHOLD
    ============================================================ */
 const setupScrollAnimation = () => {
   const observer = new IntersectionObserver(
@@ -196,6 +216,9 @@ const setupScrollAnimation = () => {
 
 /* ============================================================
    5. 타이핑 효과 (Hero 섹션)
+   Hero 영역의 텍스트가 마치 타이핑되는 것처럼 반복적으로 보이도록 만듭니다.
+   타이핑될 단어들은 CONFIG.TYPING_WORDS 배열에 들어 있고,
+   속도는 TYPING_SPEED, ERASING_SPEED, PAUSE_TIME으로 조절합니다.
    ============================================================ */
 const startTypingEffect = () => {
   const { TYPING_WORDS, TYPING_SPEED, ERASING_SPEED, PAUSE_TIME } = CONFIG;
@@ -232,6 +255,8 @@ const startTypingEffect = () => {
    이벤트: 페이지 로드, 재시도 버튼 클릭
    상태:   state.projects.status / data / filtered / languages / error
    렌더:   loadingState / errorState / emptyState / projectsGrid
+   사용자가 GitHub 저장소 목록을 불러와 프로젝트 섹션에 표시하는 핵심 기능입니다.
+   GitHub API 응답을 받아 카드형 UI로 렌더링합니다.
    ============================================================ */
 
 /* 상태에 따라 UI 전환 */
@@ -409,12 +434,9 @@ const fetchProjects = async () => {
    이벤트: input (실시간), submit
    상태:   state.form.{name|email|message}
    렌더:   에러 메시지 표시/숨김, 입력 클래스 토글, 성공 메시지
+   사용자가 이름/이메일/메시지를 입력할 때 실시간으로 검증하고,
+   전송 전에 전체 폼을 다시 확인해 잘못된 값이 있으면 막아줍니다.
    ============================================================ */
-const VALIDATORS = {
-  name:    (v) => v.trim().length < 2 ? '이름을 2자 이상 입력해 주세요.' : '',
-  email:   (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim()) ? '' : '올바른 이메일 형식을 입력해 주세요.',
-  message: (v) => v.trim().length < 10 ? '메시지를 10자 이상 입력해 주세요.' : '',
-};
 
 /* 단일 필드 검증 후 UI 반영 */
 const validateField = (fieldName, value) => {
@@ -461,6 +483,8 @@ const resetForm = () => {
 
 /* ============================================================
    8. 이벤트 연결 (모든 addEventListener를 한 곳에서 관리)
+   UI 동작을 한 군데에서 연결해 유지보수성을 높입니다.
+   버튼 클릭, 입력 이벤트, 스크롤, 메뉴 닫기, 폼 제출을 모두 여기서 등록합니다.
    ============================================================ */
 const bindEvents = () => {
 
@@ -558,6 +582,12 @@ const bindEvents = () => {
 
 /* ============================================================
    폼 제출 핸들러
+   사용자가 문의 폼을 전송할 때 호출됩니다.
+   1) 기본 폼 전송 막기
+   2) 유효성 검사
+   3) EmailJS로 메일 전송 시도
+   4) 실패 시 mailto fallback
+   5) 성공 메시지 표시
    ============================================================ */
 const handleSubmit = async (e) => {
   e.preventDefault(); // 기본 폼 전송 방지
@@ -642,6 +672,8 @@ const handleSubmit = async (e) => {
 
 /* ============================================================
    초기화
+   DOM이 준비되면 이 함수가 실행되며,
+   테마 설정, 이벤트 바인딩, 스크롤 애니메이션, 타이핑 효과, GitHub 프로젝트 로드 등을 시작합니다.
    ============================================================ */
 const init = () => {
   /* 테마 적용 (저장된 값 또는 시스템 설정) */
