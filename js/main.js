@@ -3,7 +3,7 @@
    ============================================================ */
 const CONFIG = Object.freeze({
   GITHUB_USERNAME:         'yhlee53', // GitHub 아이디
-  MAX_PROJECTS:            12,                     // 표시할 최대 저장소 수
+  MAX_PROJECTS:            30,                     // 표시할 최대 저장소 수
   SCROLL_NAV_THRESHOLD:    60,   // px: 헤더 배경 변경 기준 (README 명시)
   SCROLL_TOP_THRESHOLD:    300,  // px: 스크롤 상단 버튼 표시 기준 (README 명시)
   INTERSECTION_THRESHOLD:  0.2,  // 스크롤 애니메이션 임계값 (README 명시)
@@ -372,7 +372,7 @@ const fetchProjects = async () => {
 
     /* fork 제외 + 정렬 (스타 내림차순) + 최대 개수 제한 */
     const filtered = repos
-      .filter(({ fork }) => !fork)
+      .filter(({ private: isPrivate }) => !isPrivate)
       .sort((a, b) => b.stargazers_count - a.stargazers_count)
       .slice(0, CONFIG.MAX_PROJECTS);
 
