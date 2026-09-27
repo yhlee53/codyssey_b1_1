@@ -12,9 +12,10 @@ const CONFIG = Object.freeze({
   ERASING_SPEED:   75,    // ms: 지우기 속도
   PAUSE_TIME:      1800,  // ms: 단어 유지 시간
   /* EmailJS 설정: 실제 전송을 사용하려면 EmailJS 계정에서 발급받은 값을 넣으세요. 빈 값이면 시뮬레이션 모드로 동작합니다. */
-  EMAILJS_SERVICE_ID:  '', // ex: 'service_xxx'
-  EMAILJS_TEMPLATE_ID: '', // ex: 'template_xxx'
-  EMAILJS_PUBLIC_KEY:   '', // ex: 'user_xxx' 또는 public key
+  TO_EMAIL:               'yhlee53@daum.net', // 실제 수신 메일 주소
+  EMAILJS_SERVICE_ID:      'service_145b45i', // ex: 'service_xxx'
+  EMAILJS_TEMPLATE_ID:     'template_xan7lwh', // ex: 'template_xxx'
+  EMAILJS_PUBLIC_KEY:      'uHsrQljjYOY2ENJyL', // ex: 'user_xxx' 또는 public key
 });
 
 /* ============================================================
@@ -535,7 +536,9 @@ const bindEvents = () => {
   });
 
   /* 폼: 제출 */
-  el.contactForm.addEventListener('submit', handleSubmit);
+  if (el.contactForm) {
+    el.contactForm.addEventListener('submit', handleSubmit);
+  }
 
   /* 프로필 이미지 로드 실패 시 폴백 */
   el.profileImg.addEventListener('error', () => {
@@ -558,35 +561,53 @@ const bindEvents = () => {
    ============================================================ */
 const handleSubmit = async (e) => {
   e.preventDefault(); // 기본 폼 전송 방지
+  console.log('[Form] submit start', {
+    isSubmitting: state.form.isSubmitting,
+    hasEmailJS: !!window.emailjs,
+    serviceId: CONFIG.EMAILJS_SERVICE_ID,
+    templateId: CONFIG.EMAILJS_TEMPLATE_ID,
+    publicKey: CONFIG.EMAILJS_PUBLIC_KEY,
+  });
 
   if (state.form.isSubmitting) return;
 
   const isValid = validateAll();
-  if (!isValid) return;
+  if (!isValid) {
+    console.warn('[Form] validation failed');
+    return;
+  }
 
   state.form.isSubmitting = true;
   el.submitBtn.disabled = true;
   el.submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin" aria-hidden="true"></i><span>전송 중...</span>';
 
-  /* 실제 전송: EmailJS 설정이 있다면 EmailJS로 전송, 없으면 시뮬레이션 모드 */
+  /* 실제 전송: EmailJS 설정이 있다면 EmailJS로 전송, 없으면 메일 앱 오픈 */
   const useEmailJS = CONFIG.EMAILJS_SERVICE_ID && CONFIG.EMAILJS_TEMPLATE_ID && CONFIG.EMAILJS_PUBLIC_KEY;
 
   try {
     if (useEmailJS && window.emailjs) {
-      // EmailJS 초기화 (public key)
-      emailjs.init(CONFIG.EMAILJS_PUBLIC_KEY);
+      console.log('[Form] send via EmailJS');
+      emailjs.init({ publicKey: CONFIG.EMAILJS_PUBLIC_KEY });
 
       const templateParams = {
         from_name: state.form.name.value,
         from_email: state.form.email.value,
         message: state.form.message.value,
+        to_email: CONFIG.TO_EMAIL,
       };
 
       await emailjs.send(CONFIG.EMAILJS_SERVICE_ID, CONFIG.EMAILJS_TEMPLATE_ID, templateParams);
 
     } else {
-      // 시뮬레이션(네트워크 지연 모사)
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      console.warn('[Form] EmailJS unavailable; fallback mailto');
+      const subject = encodeURIComponent(`문의사항: ${state.form.name.value}`);
+      const body = encodeURIComponent(
+        `이름: ${state.form.name.value}\n` +
+        `이메일: ${state.form.email.value}\n\n` +
+        `${state.form.message.value}`
+      );
+      window.location.href = `mailto:${CONFIG.TO_EMAIL}?subject=${subject}&body=${body}`;
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     state.form.isSubmitting = false;
@@ -598,7 +619,6 @@ const handleSubmit = async (e) => {
     el.formSuccess.classList.remove('hidden');
     el.contactForm.reset();
 
-    /* 5초 후 성공 메시지 숨기기 */
     setTimeout(() => {
       el.formSuccess.classList.add('hidden');
       resetForm();
@@ -606,10 +626,17 @@ const handleSubmit = async (e) => {
 
   } catch (err) {
     console.error('[Form] 전송 실패:', err);
+    const subject = encodeURIComponent(`문의사항: ${state.form.name.value}`);
+    const body = encodeURIComponent(
+      `이름: ${state.form.name.value}\n` +
+      `이메일: ${state.form.email.value}\n\n` +
+      `${state.form.message.value}`
+    );
+    window.location.href = `mailto:${subject}&body=${body}`;
     state.form.isSubmitting = false;
     el.submitBtn.disabled = false;
     el.submitBtn.innerHTML = '<i class="fas fa-paper-plane" aria-hidden="true"></i><span>메시지 보내기</span>';
-    alert('메시지 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+    alert('메일 앱이 열렸습니다. 발신자 메일 앱에서 전송해 주세요.');
   }
 };
 
